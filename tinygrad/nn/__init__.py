@@ -97,15 +97,24 @@ class InstanceNorm:
     return x * self.weight.reshape(1, -1, *[1] * (len(x.shape)-2)) + self.bias.reshape(1, -1, *[1] * (len(x.shape)-2))
 
 class LayerNorm:
+  # Initialize the LayerNorm class
   def __init__(self, normalized_shape:Union[int, Tuple[int, ...]], eps:float=1e-5, elementwise_affine:bool=True):
+    # Set the normalized_shape attribute based on the input argument
     self.normalized_shape = (normalized_shape,) if isinstance(normalized_shape, int) else tuple(normalized_shape)
+    # Set the axis, eps, and elementwise_affine attributes
     self.axis, self.eps, self.elementwise_affine = tuple(-1-i for i in range(len(self.normalized_shape))), eps, elementwise_affine
+    # Initialize the weight and bias attributes
     self.weight, self.bias = (Tensor.ones(*self.normalized_shape), Tensor.zeros(*self.normalized_shape)) if elementwise_affine else (None, None)
 
+  # Apply layer normalization to the input tensor
   def __call__(self, x:Tensor):
+    # Check if the last dimensions of the input tensor match the normalized_shape
     assert self.normalized_shape == x.shape[-len(self.normalized_shape):], f"last dimensions of {x.shape} must match {self.normalized_shape}"
+    # Apply layer normalization to the input tensor
     x = x.layernorm(eps=self.eps, axis=self.axis)
+    # If elementwise_affine is False, return the normalized tensor
     if not self.elementwise_affine: return x
+    # If elementwise_affine is True, apply an elementwise affine transformation to the normalized tensor
     return x * self.weight + self.bias
 
 class LayerNorm2d(LayerNorm):
